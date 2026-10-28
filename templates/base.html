@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="{{ csrf_token }}">
+<title>{% block title %}Finance Calculators{% endblock %} · CalcWise</title>
+<meta name="description" content="Free investment, home loan, EMI, savings goal and retirement calculators with charts and repayment schedules.">
+<link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="{% block accent %}{% endblock %}">
+<header class="top">
+  <div class="wrap top-row">
+    <a class="brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="" width="34" height="34"><span>Calc<b>Wise</b></span></a>
+    <nav class="nav" id="nav">
+      {% for k, c in CALCS.items() %}<a href="{{ url_for('calculator', kind=k) }}" class="{{ 'on' if request.view_args and request.view_args.get('kind') == k }}">{{ c.short }}</a>{% endfor %}
+      <a href="{{ url_for('converter') }}" class="sci-link {{ 'on' if request.endpoint == 'converter' }}">Converter</a>
+      <a href="{{ url_for('scientific') }}" class="sci-link {{ 'on' if request.endpoint == 'scientific' }}">Scientific</a>
+      <a href="{{ url_for('generators') }}" class="sci-link {{ 'on' if request.endpoint == 'generators' }}">Generators</a>
+      <a href="{{ url_for('saved_list') }}" class="saved-link {{ 'on' if request.endpoint == 'saved_list' }}" title="My calculations">Saved{% if saved_count %} <em>{{ saved_count }}</em>{% endif %}</a>
+    </nav>
+    <label class="currency" title="Currency for all results">
+      <select id="currency" data-locales='{{ CURRENCY_LOCALES|tojson }}'>
+        {% for group, items in CURRENCY_GROUPS.items() %}<optgroup label="{{ group }}">
+          {% for c in items %}<option value="{{ c.code }}">{{ c.flag }} {{ c.code }} · {{ c.name }}</option>{% endfor %}
+        </optgroup>{% endfor %}
+      </select>
+    </label>
+    <button class="menu" id="menuBtn" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+{% with msgs = get_flashed_messages(with_categories=true) %}{% if msgs %}
+<div class="wrap">{% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}</div>
+{% endif %}{% endwith %}
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer class="foot">
+  <div class="wrap foot-row">
+    <div><a class="brand small" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="" width="26" height="26"><span>Calc<b>Wise</b></span></a>
+      <p>Free finance calculators with clear explanations. Results are estimates for planning - not financial advice.</p></div>
+    <div><b>Calculators</b>{% for k, c in CALCS.items() %}<a href="{{ url_for('calculator', kind=k) }}">{{ c.title }}</a>{% endfor %}<a href="{{ url_for('scientific') }}">Scientific calculator</a><a href="{{ url_for('converter') }}">Currency converter</a><a href="{{ url_for('generators') }}">OTP, password &amp; test-data generators</a></div>
+    <div><b>Project</b><a href="{{ url_for('about') }}">About CalcWise</a><a href="{{ url_for('saved_list') }}">My calculations</a>
+      <a href="https://github.com/Mujyambere70" target="_blank" rel="noopener">GitHub · Mujyambere70</a></div>
+  </div>
+  <div class="wrap foot-bottom">© {{ year }} CalcWise · Designed &amp; developed by <a href="{{ url_for('about') }}">Jean Michel Mujyambere</a></div>
+</footer>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

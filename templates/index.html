@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Free · no sign-up · instant results</span>
+      <h1>Make money decisions with <span class="grad">clear numbers</span></h1>
+      <p class="lead">Calculate investment growth, home loan repayments, EMIs, savings goals and retirement plans.
+        See every month and year in a chart and a full schedule, save your calculations and share them.</p>
+      <div class="hero-btns">
+        <a class="btn btn-primary btn-lg" href="{{ url_for('calculator', kind='investment') }}">Start with investment</a>
+        <a class="btn btn-light btn-lg" href="{{ url_for('calculator', kind='bond') }}">Home loan repayment</a>
+      </div>
+      <ul class="ticks">
+        <li>Results update while you type</li><li>Amortization schedules &amp; CSV export</li><li>All world currencies with live exchange rates</li><li>Scientific calculator</li>
+      </ul>
+    </div>
+    <div class="hero-card" aria-hidden="true">
+      <div class="hc-top"><span>📈 Investment</span><small>FRw 1,000,000 + FRw 50,000/month · 8% · 10 yrs</small></div>
+      <div class="hc-big">FRw 11,165,139</div>
+      <div class="hc-bars">{% for h in [10,14,19,24,30,37,45,54,64,76] %}<i style="height:{{ h }}%"><b style="height:{{ (100 - h * 0.6)|round }}%"></b></i>{% endfor %}</div>
+      <div class="hc-legend"><span><i class="c1"></i>Your deposits</span><span><i class="c2"></i>Interest earned</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2 class="sec-title">Choose a calculator</h2>
+  <div class="cards">
+    {% for k, c in CALCS.items() %}
+    <a class="calc-card" href="{{ url_for('calculator', kind=k) }}" style="--accent:{{ c.color }}">
+      <span class="cc-icon">{{ c.icon }}</span>
+      <h3>{{ c.title }}</h3>
+      <p>{{ c.tagline }}</p>
+      <span class="cc-go">Open calculator →</span>
+    </a>
+    {% endfor %}
+    <a class="calc-card" href="{{ url_for('converter') }}" style="--accent:#14b8a6">
+      <span class="cc-icon">💱</span>
+      <h3>Currency converter</h3>
+      <p>Live exchange rates for every currency in the world, with history charts. East Africa first.</p>
+      <span class="cc-go">Convert money →</span>
+    </a>
+    <a class="calc-card" href="{{ url_for('scientific') }}" style="--accent:#0ea5e9">
+      <span class="cc-icon">🧮</span>
+      <h3>Scientific calculator</h3>
+      <p>sin, cos, tan, logs, powers, roots, n!, nCr, memory and history - with DEG / RAD / GRAD.</p>
+      <span class="cc-go">Open calculator →</span>
+    </a>
+    <a class="calc-card" href="{{ url_for('generators') }}" style="--accent:#8b5cf6">
+      <span class="cc-icon">🔐</span>
+      <h3>Generators</h3>
+      <p>Authenticator OTP codes, strong passwords, emails, phone and passport numbers for every country.</p>
+      <span class="cc-go">Open generators →</span>
+    </a>
+    <a class="calc-card saved-card" href="{{ url_for('saved_list') }}">
+      <span class="cc-icon">💾</span>
+      <h3>My calculations</h3>
+      <p>{{ saved_count }} saved. Open, rename or delete them any time.</p>
+      <span class="cc-go">Open my list →</span>
+    </a>
+  </div>
+</section>
+
+<section class="wrap how">
+  <div><b>1</b><h3>Enter your numbers</h3><p>Every field has a short explanation. Wrong values are explained in plain words.</p></div>
+  <div><b>2</b><h3>See the full picture</h3><p>Big answer, key numbers, a chart and the schedule for every month or year.</p></div>
+  <div><b>3</b><h3>Save, share, export</h3><p>Keep calculations in "My calculations", copy a share link, download CSV or print.</p></div>
+</section>
+{% endblock %}

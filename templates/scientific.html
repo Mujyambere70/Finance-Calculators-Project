@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Scientific calculator{% endblock %}
+{% block accent %}--accent:#0ea5e9{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="calc-head">
+    <span class="ch-icon">🧮</span>
+    <div><h1>Scientific calculator</h1><p class="muted">Trigonometry, logarithms, powers and roots, factorials, combinations, memory and history. Type with your keyboard or click.</p></div>
+  </div>
+
+  <div class="sci-grid">
+    <section class="sci" id="sci">
+      <div class="sci-screen">
+        <div class="sci-status">
+          <span id="modeBadge">DEG</span><span id="secondBadge" hidden>2nd</span><span id="hypBadge" hidden>HYP</span>
+          <span id="memBadge" hidden>M</span><span class="right" id="ansBadge">Ans = 0</span>
+        </div>
+        <input id="expr" class="sci-expr" autocomplete="off" spellcheck="false" placeholder="e.g. 2sin(30)+√16" aria-label="Expression">
+        <div class="sci-result" id="result">0</div>
+        <div class="sci-extra" id="extra">&nbsp;</div>
+      </div>
+
+      <div class="keys fn">
+        <button data-act="second" class="k-mod">2nd</button>
+        <button data-act="hyp" class="k-mod">hyp</button>
+        <button data-act="mode" class="k-mod" id="modeBtn">DEG</button>
+        <button data-act="mc" class="k-mem">MC</button>
+        <button data-act="mr" class="k-mem">MR</button>
+        <button data-act="mplus" class="k-mem" data-second-act="mminus" data-second-label="M−">M+</button>
+
+        <button data-ins="sin(" data-2="asin(" data-h="sinh(" data-h2="asinh(">sin</button>
+        <button data-ins="cos(" data-2="acos(" data-h="cosh(" data-h2="acosh(">cos</button>
+        <button data-ins="tan(" data-2="atan(" data-h="tanh(" data-h2="atanh(">tan</button>
+        <button data-ins="ln(" data-2="e^(" data-label2="eˣ">ln</button>
+        <button data-ins="log(" data-2="10^(" data-label2="10ˣ">log</button>
+        <button data-ins="^(-1)" data-2="log2(" data-label2="log₂">1/x</button>
+
+        <button data-ins="^2" data-2="^3" data-label2="x³">x²</button>
+        <button data-ins="^" data-2="root(" data-label2="ʸ√x">xʸ</button>
+        <button data-ins="√(" data-2="∛(" data-label2="∛">√</button>
+        <button data-ins="!" data-2="nPr(" data-label2="nPr">n!</button>
+        <button data-ins="nCr(" data-2="gcd(" data-label2="gcd">nCr</button>
+        <button data-ins="abs(" data-2="round(" data-label2="round">|x|</button>
+
+        <button data-ins="π" data-2="τ" data-label2="τ">π</button>
+        <button data-ins="e" data-2="φ" data-label2="φ">e</button>
+        <button data-ins="Ans">Ans</button>
+        <button data-ins=" mod ">mod</button>
+        <button data-ins="%">%</button>
+        <button data-ins=",">,</button>
+      </div>
+
+      <div class="keys num">
+        <button data-ins="(">(</button><button data-ins=")">)</button><button data-act="exp" title="×10ⁿ">EXP</button>
+        <button data-act="back" class="k-del" title="Backspace">⌫</button><button data-act="clear" class="k-del">AC</button>
+        <button data-ins="7" class="k-num">7</button><button data-ins="8" class="k-num">8</button><button data-ins="9" class="k-num">9</button>
+        <button data-ins="÷" class="k-op">÷</button><button data-ins="×" class="k-op">×</button>
+        <button data-ins="4" class="k-num">4</button><button data-ins="5" class="k-num">5</button><button data-ins="6" class="k-num">6</button>
+        <button data-ins="−" class="k-op">−</button><button data-ins="+" class="k-op">+</button>
+        <button data-ins="1" class="k-num">1</button><button data-ins="2" class="k-num">2</button><button data-ins="3" class="k-num">3</button>
+        <button data-act="neg" class="k-op">±</button><button data-act="equals" class="k-eq" id="eqBtn">=</button>
+        <button data-ins="0" class="k-num wide">0</button><button data-ins="." class="k-num">.</button><button data-act="copy" class="k-op" title="Copy result">⧉</button>
+      </div>
+    </section>
+
+    <aside class="sci-side">
+      <section class="card">
+        <div class="card-head"><h2>History</h2><button class="btn btn-light sm" id="clearHistory">Clear</button></div>
+        <ol class="history" id="history"><li class="muted">Your calculations will appear here. Click one to use it again.</li></ol>
+      </section>
+      <section class="card">
+        <h2>What you can type</h2>
+        <table class="ref">
+          <tr><td><code>2sin(30)+√16</code></td><td>implicit ×, functions</td></tr>
+          <tr><td><code>3(4+5)</code>, <code>2π</code></td><td>multiply without ×</td></tr>
+          <tr><td><code>2^3^2</code> = 512</td><td>powers from the right</td></tr>
+          <tr><td><code>-2^2</code> = −4</td><td>power before minus</td></tr>
+          <tr><td><code>log(8, 2)</code>, <code>ln</code>, <code>log2</code></td><td>any base</td></tr>
+          <tr><td><code>root(27, 3)</code>, <code>∛-8</code></td><td>n-th roots</td></tr>
+          <tr><td><code>5!</code>, <code>0.5!</code></td><td>factorial, gamma</td></tr>
+          <tr><td><code>nCr(10,3)</code>, <code>nPr(5,2)</code></td><td>combinations</td></tr>
+          <tr><td><code>20% × 150</code>, <code>10 mod 3</code></td><td>percent, remainder</td></tr>
+          <tr><td><code>1.5E3</code>, <code>Ans</code>, <code>|−7|</code></td><td>×10ⁿ, last answer, absolute</td></tr>
+          <tr><td><code>sinh</code>, <code>asin</code>, <code>hypot</code>, <code>gcd</code>, <code>lcm</code>, <code>min</code>, <code>max</code>, <code>floor</code>, <code>ceil</code></td><td>more functions</td></tr>
+        </table>
+        <p class="small muted">Keyboard: <b>Enter</b> = equals, <b>Esc</b> = clear, <b>^</b> = power. Angles follow DEG / RAD / GRAD.</p>
+      </section>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='sci.js') }}"></script>{% endblock %}

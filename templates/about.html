@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<div class="wrap about">
+  <div class="calc-head"><span class="ch-icon">ℹ️</span><div><h1>About CalcWise</h1><p class="muted">From a console program to a full web application.</p></div></div>
+  <div class="about-grid">
+    <section class="card">
+      <h2>The project</h2>
+      <p>CalcWise started as the <b>Finance Calculator</b> capstone project of the HyperionDev Software Engineering Bootcamp:
+        a Python console program with two calculators - investment (simple or compound interest) and bond (home loan) repayment.</p>
+      <p>It was rebuilt as a web application with five calculators, live results, charts, full schedules, saved calculations,
+        share links, CSV export and print. The original formulas are still used and tested:</p>
+      <ul class="ticks">
+        <li><code>A = P(1 + r·t)</code> - simple interest</li>
+        <li><code>A = P(1 + r)<sup>t</sup></code> - compound interest</li>
+        <li><code>x = i·P / (1 − (1 + i)<sup>−n</sup>)</code> - bond repayment</li>
+      </ul>
+      <p class="muted small">Built with Python, Flask, SQLite, Jinja2, HTML, CSS and JavaScript (charts drawn as SVG, no libraries).</p>
+    </section>
+    <section class="card dev">
+      <div class="dev-top"><span class="dev-avatar">JM</span><div><h2>Jean Michel Mujyambere</h2><p class="muted">Software Engineer · Python Developer · Data Analyst</p></div></div>
+      <ul class="ticks">
+        <li>Master's student, Applied Mathematics and Informatics (Data Analysis), Siberian Federal University, Krasnoyarsk</li>
+        <li>Bachelor of Computer Applications (AI &amp; ML), Maharishi Markandeshwar University, India</li>
+        <li>HyperionDev Software Engineering Bootcamp · Google Advanced Data Analytics certificate</li>
+        <li>Other projects: PyBank (online banking), Yo Delivery (e-commerce), TaskFlow (task manager)</li>
+      </ul>
+      <a class="btn btn-light" href="https://github.com/Mujyambere70" target="_blank" rel="noopener">GitHub · Mujyambere70</a>
+    </section>
+  </div>
+  <p class="small muted">CalcWise gives estimates for planning and learning. It is not financial advice - check final numbers with your bank.</p>
+</div>
+{% endblock %}

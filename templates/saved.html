@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}My calculations{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="calc-head">
+    <span class="ch-icon">💾</span>
+    <div><h1>My calculations</h1><p class="muted">Saved in this browser - no account needed. Open one to change it, or rename and delete.</p></div>
+    {% if rows %}<form method="post" action="{{ url_for('saved_delete_all') }}" onsubmit="return confirm('Delete ALL your saved calculations?')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-danger-ghost">Delete all</button></form>{% endif %}
+  </div>
+  <div class="saved-grid">
+    {% for r in rows %}
+    {% set c = CALCS[r.kind] %}
+    <article class="card saved-item" style="--accent:{{ c.color }}" data-currency="{{ r.currency }}">
+      <div class="si-top"><span class="ch-icon sm">{{ c.icon }}</span><div><h3>{{ r.name }}</h3><small class="muted">{{ c.short }} · saved {{ r.updated_at[:16] }}</small></div></div>
+      <div class="si-nums">
+        {% for key, label in {'investment': [('final_value', 'Final value'), ('total_interest', 'Interest earned')],
+            'bond': [('monthly_payment', 'Monthly repayment'), ('total_interest', 'Total interest')],
+            'loan': [('monthly_payment', 'EMI'), ('apr', 'APR %')],
+            'savings-goal': [('monthly_saving', 'Save per month'), ('total_deposits', 'Total deposits')],
+            'retirement': [('at_retirement', 'At retirement'), ('monthly_income', 'Monthly income')]}[r.kind] %}
+        <div><small>{{ label }}</small><b class="{{ 'pct' if 'APR' in label else 'money' }}" data-value="{{ r.summary[key] }}">{{ r.summary[key] }}</b></div>
+        {% endfor %}
+      </div>
+      <div class="si-actions">
+        <a class="btn btn-primary sm" href="{{ url_for('calculator', kind=r.kind, saved=r.id) }}">Open &amp; edit</a>
+        <details class="rename"><summary class="btn btn-light sm">Rename</summary>
+          <form method="post" action="{{ url_for('saved_rename', sid=r.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input name="name" value="{{ r.name }}" maxlength="60" required><button class="btn btn-primary sm">OK</button></form></details>
+        <form method="post" action="{{ url_for('saved_delete', sid=r.id) }}" onsubmit="return confirm('Delete “{{ r.name }}”?')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-danger-ghost sm">Delete</button></form>
+      </div>
+    </article>
+    {% else %}
+    <div class="card empty"><h3>Nothing saved yet</h3><p class="muted">Open any calculator and press <b>Save</b> - it will appear here.</p>
+      <a class="btn btn-primary" href="{{ url_for('index') }}">Choose a calculator</a></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

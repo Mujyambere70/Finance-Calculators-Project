@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ calc.title }}{% endblock %}
+{% block accent %}--accent:{{ calc.color }}{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="calc-head">
+    <span class="ch-icon">{{ calc.icon }}</span>
+    <div><h1>{{ calc.title }}</h1><p class="muted">{{ calc.tagline }}</p></div>
+    {% if saved %}<span class="pill">Editing saved: <b>{{ saved.name }}</b></span>{% endif %}
+  </div>
+
+  <div class="calc-grid">
+    <form class="card form" id="calcForm" data-kind="{{ kind }}" data-saved-id="{{ saved.id if saved else '' }}"
+          data-saved-name="{{ saved.name if saved else '' }}" novalidate>
+      {% for f in calc.fields %}
+        {% set v = values.get(f.name, '') %}
+        {% if f.type == 'hidden' %}
+          <input type="hidden" name="{{ f.name }}" value="{{ v }}">
+        {% else %}
+        <div class="field" data-field="{{ f.name }}" {% if f.show_if %}data-show-if="{{ f.show_if }}"{% endif %}>
+          <label for="f_{{ f.name }}">{{ f.label }}</label>
+          {% if f.type == 'money' %}
+            <div class="input-wrap"><span class="pre cur-symbol">₹</span>
+              <input id="f_{{ f.name }}" name="{{ f.name }}" value="{{ v }}" inputmode="decimal" autocomplete="off" class="money-input"></div>
+          {% elif f.type == 'percent' %}
+            <div class="input-wrap"><input id="f_{{ f.name }}" name="{{ f.name }}" type="number" value="{{ v }}" step="{{ f.step }}" min="0" inputmode="decimal"><span class="post">%</span></div>
+            <input type="range" class="range" data-for="f_{{ f.name }}" min="0" max="{{ 30 if f.name != 'fee' else 5 }}" step="{{ f.step }}" value="{{ v }}">
+          {% elif f.type == 'number' %}
+            <div class="input-wrap"><input id="f_{{ f.name }}" name="{{ f.name }}" type="number" value="{{ v }}" min="{{ f.min }}" max="{{ f.max }}" step="{{ f.step }}">
+              {% if f.unit_field %}<span class="unit-toggle" data-unit="{{ f.unit_field }}"><button type="button" data-v="years" class="on">years</button><button type="button" data-v="months">months</button></span>
+              {% elif f.suffix %}<span class="post">{{ f.suffix }}</span>{% endif %}</div>
+            {% if f.presets %}<div class="presets">{% for p in f.presets %}<button type="button" data-set="f_{{ f.name }}" data-value="{{ p }}">{{ p }}</button>{% endfor %}</div>{% endif %}
+          {% elif f.type == 'segmented' %}
+            <div class="segmented">{% for val, lab in f.options %}<label><input type="radio" name="{{ f.name }}" value="{{ val }}" {{ 'checked' if v == val }}><span>{{ lab }}</span></label>{% endfor %}</div>
+          {% elif f.type == 'select' %}
+            <select id="f_{{ f.name }}" name="{{ f.name }}">{% for val, lab in f.options %}<option value="{{ val }}" {{ 'selected' if v == val }}>{{ lab }}</option>{% endfor %}</select>
+          {% elif f.type == 'month' %}
+            <input id="f_{{ f.name }}" name="{{ f.name }}" type="month" value="{{ v }}">
+          {% endif %}
+          {% if f.help %}<small class="help">{{ f.help }}</small>{% endif %}
+          <small class="err"></small>
+        </div>
+        {% endif %}
+      {% endfor %}
+      <div class="form-actions">
+        <button type="button" class="btn btn-light" id="resetBtn">Reset</button>
+        <button type="submit" class="btn btn-primary">Calculate</button>
+      </div>
+    </form>
+
+    <section class="results" id="results" aria-live="polite">
+      <div class="card answer">
+        <div class="answer-label" id="answerLabel">&nbsp;</div>
+        <div class="answer-big" id="answerBig">—</div>
+        <div class="fx-line" id="fxLine" hidden>≈ <b id="fxValue"></b> in
+          <select id="fxTo" aria-label="Show also in">{% for group, items in CURRENCY_GROUPS.items() %}<optgroup label="{{ group }}">{% for c in items %}<option value="{{ c.code }}">{{ c.flag }} {{ c.code }}</option>{% endfor %}</optgroup>{% endfor %}</select>
+          <small>live rate · <a href="{{ url_for('converter') }}">converter</a></small></div>
+        <p class="answer-text" id="answerText">Enter your numbers to see the result.</p>
+        <div class="answer-actions">
+          <button class="btn btn-primary sm" id="saveBtn">💾 {{ 'Update saved' if saved else 'Save' }}</button>
+          <button class="btn btn-light sm" id="shareBtn">🔗 Copy share link</button>
+          <button class="btn btn-light sm" onclick="window.print()">🖨 Print / PDF</button>
+        </div>
+        <div class="alert hidden" id="alertBox"></div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="card">
+        <div class="card-head"><h2 id="chartTitle">Chart</h2><div class="legend" id="legend"></div></div>
+        <div id="chart" class="chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2 id="tableTitle">Schedule</h2>
+          <div class="actions"><span class="seg-mini" id="tableMode" hidden><button data-mode="year" class="on">Yearly</button><button data-mode="month">Monthly</button></span>
+            <button class="btn btn-light sm" id="csvBtn">⬇ CSV</button></div></div>
+        <div class="table-wrap"><table class="table" id="table"></table></div>
+      </div>
+      <div class="card explain">
+        <h2>How it is calculated</h2>
+        {% for t, text in calc.explain %}<div class="ex"><b>{{ t }}</b><p>{{ text|safe }}</p></div>{% endfor %}
+        <p class="small muted">Results are estimates for planning. Banks may round differently or add other fees.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<dialog id="saveDialog" class="dialog">
+  <form method="dialog" id="saveForm">
+    <h2>Save this calculation</h2>
+    <label for="saveName">Name</label>
+    <input id="saveName" maxlength="60" placeholder="e.g. Flat in Krasnoyarsk - 20 years">
+    <label class="check" id="saveAsNewWrap" hidden><input type="checkbox" id="saveAsNew"> Save as a new calculation (keep the old one)</label>
+    <div class="form-actions"><button value="cancel" class="btn btn-light">Cancel</button><button value="ok" class="btn btn-primary" id="saveOk">Save</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast"></div>
+{% endblock %}

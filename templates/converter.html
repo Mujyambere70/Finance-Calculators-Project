@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Currency converter - live rates{% endblock %}
+{% block accent %}--accent:#14b8a6{% endblock %}
+{% macro currency_select(id, value) -%}
+<select id="{{ id }}" class="cur-select" data-default="{{ value }}">
+  {% for group, items in CURRENCY_GROUPS.items() %}<optgroup label="{{ group }}">
+    {% for c in items %}<option value="{{ c.code }}" {{ 'selected' if c.code == value }}>{{ c.flag }} {{ c.code }} - {{ c.name }}</option>{% endfor %}
+  </optgroup>{% endfor %}
+</select>
+{%- endmacro %}
+{% block content %}
+<div class="wrap">
+  <div class="calc-head">
+    <span class="ch-icon">💱</span>
+    <div><h1>Currency converter</h1><p class="muted">Live exchange rates for {{ INFO|length }} currencies - every country in the world, East Africa first.</p></div>
+    <span class="live" id="liveBadge"><i></i><span id="liveText">Loading live rates…</span></span>
+  </div>
+
+  <div class="alert bad hidden" id="fxError"></div>
+
+  <section class="card conv">
+    <div class="conv-row">
+      <div class="conv-field amount"><label for="amount">Amount</label>
+        <input id="amount" value="1000" inputmode="decimal" autocomplete="off"></div>
+      <div class="conv-field"><label for="from">From</label>{{ currency_select('from', 'USD') }}</div>
+      <button class="swap" id="swap" title="Swap currencies" aria-label="Swap">⇄</button>
+      <div class="conv-field"><label for="to">To</label>{{ currency_select('to', 'RWF') }}</div>
+    </div>
+    <div class="conv-result">
+      <div class="cr-from" id="crFrom">&nbsp;</div>
+      <div class="cr-to" id="crTo">—</div>
+      <div class="cr-rates" id="crRates">&nbsp;</div>
+    </div>
+    <div class="pairs" id="pairs">
+      {% for a, b in [('USD','RWF'), ('RWF','KES'), ('KES','UGX'), ('UGX','TZS'), ('EUR','RWF'), ('RUB','RWF'), ('USD','KES'), ('GBP','USD'), ('USD','INR'), ('BTC','USD')] %}
+      <button data-from="{{ a }}" data-to="{{ b }}">{{ INFO[a].flag }} {{ a }} → {{ INFO[b].flag }} {{ b }}</button>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="conv-grid">
+    <section class="card">
+      <div class="card-head"><h2 id="histTitle">Rate history</h2>
+        <span class="seg-mini" id="range"><button data-days="7">7D</button><button data-days="30" class="on">1M</button><button data-days="90">3M</button><button data-days="365">1Y</button></span></div>
+      <div class="hist-stats" id="histStats"></div>
+      <div id="histChart" class="chart"><p class="muted small">Loading…</p></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Your amount in other currencies</h2>
+        <div class="actions">{{ currency_select('addFav', 'EUR') }}<button class="btn btn-light sm" id="addFavBtn">+ Add</button></div></div>
+      <ul class="favs" id="favs"></ul>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head"><h2>All currencies</h2>
+      <input type="search" id="search" class="search-input" placeholder="Search country, currency or code…"></div>
+    <div class="chips-row" id="regions"><button data-region="" class="on">All</button>{% for r in CURRENCY_GROUPS %}<button data-region="{{ r }}">{{ r }}</button>{% endfor %}</div>
+    <div class="table-wrap tall"><table class="table" id="allTable"></table></div>
+  </section>
+
+  <p class="small muted attribution" id="attribution">
+    Mid-market rates for information - banks and exchange offices add their own margin.
+    Rates by <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Exchange Rate API</a> and
+    <a href="https://github.com/fawazahmed0/exchange-api" target="_blank" rel="noopener">currency-api</a>.
+  </p>
+</div>
+<div class="toast" id="toast"></div>
+<script id="currencyData" type="application/json">{{ INFO|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='conv.js') }}"></script>{% endblock %}

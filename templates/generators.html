@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}{{ TOOLS[tool] }} generator{% endblock %}
+{% block accent %}--accent:#8b5cf6{% endblock %}
+{% macro country_select(name, value, with_all=true) -%}
+<select name="{{ name }}" class="country-select">
+  {% if with_all %}<option value="ALL">🌍 Random country (all {{ n_countries }})</option>{% endif %}
+  {% for group, items in COUNTRY_GROUPS.items() %}<optgroup label="{{ group }}">
+    {% for c in items %}<option value="{{ c.code }}" {{ 'selected' if c.code == value }}>{{ c.flag }} {{ c.name }} (+{{ c.dial }})</option>{% endfor %}
+  </optgroup>{% endfor %}
+</select>
+{%- endmacro %}
+{% macro count_field(value=10) -%}
+<div class="field"><label>How many</label>
+  <div class="input-wrap"><input name="count" type="number" min="1" max="100" value="{{ value }}"><span class="post">max 100</span></div>
+  <span class="err"></span></div>
+{%- endmacro %}
+{% block content %}
+<div class="wrap">
+  <div class="calc-head">
+    <span class="ch-icon">🔐</span>
+    <div><h1>Generators</h1><p class="muted">Secure codes and passwords, plus test data for forms - emails, phone numbers and passport numbers for {{ n_countries }} countries.</p></div>
+  </div>
+
+  <nav class="gen-tabs" id="genTabs">
+    {% for k, label in TOOLS.items() %}<a href="{{ url_for('generators', tool=k) }}" data-tool="{{ k }}" class="{{ 'on' if k == tool }}">
+      <span>{{ {'otp': '🔢', 'password': '🔑', 'email': '✉️', 'phone': '📱', 'passport': '🛂'}[k] }}</span>{{ label }}</a>{% endfor %}
+  </nav>
+
+  <!-- ================================================================ OTP -->
+  <section class="gen-panel" data-panel="otp" {{ 'hidden' if tool != 'otp' }}>
+    <div class="gen-grid">
+      <div class="card totp" id="totp">
+        <div class="card-head"><h2>Authenticator code (TOTP / HOTP)</h2>
+          <span class="seg-mini" id="otpMode"><button data-mode="totp" class="on">Time-based</button><button data-mode="hotp">Counter-based</button></span></div>
+        <p class="muted small">The same codes as Google Authenticator, Microsoft Authenticator or Authy (RFC 6238 / RFC 4226).
+          Scan the QR code or type the setup key in your app - both show the same 6 digits.</p>
+        <div class="totp-main">
+          <div class="totp-code-wrap">
+            <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54" class="ring-bg"/><circle cx="60" cy="60" r="54" class="ring-fg" id="ring"/></svg>
+            <div class="totp-center"><div class="totp-code" id="totpCode">------</div><div class="totp-left" id="totpLeft">&nbsp;</div></div>
+          </div>
+          <div class="totp-side">
+            <div class="totp-nb" id="totpNb"></div>
+            <div class="qr" id="qr" title="Scan with your authenticator app"></div>
+          </div>
+        </div>
+        <form class="totp-form" id="totpForm" autocomplete="off">
+          <div class="field wide"><label>Setup key (Base32 secret)</label>
+            <div class="input-wrap"><input name="secret" id="secret" spellcheck="false" class="mono">
+              <button type="button" class="post btn-in" id="newSecret" title="New random secret">New</button>
+              <button type="button" class="post btn-in" data-copy-from="secret" title="Copy">Copy</button></div>
+            <span class="err"></span></div>
+          <div class="field"><label>Account name</label><div class="input-wrap"><input name="account" value="demo@example.com"></div></div>
+          <div class="field"><label>Issuer (app or site)</label><div class="input-wrap"><input name="issuer" value="CalcWise"></div></div>
+          <div class="field"><label>Digits</label><select name="digits"><option>6</option><option>8</option></select></div>
+          <div class="field" data-totp-only><label>Period</label><select name="period"><option value="30">30 seconds</option><option value="60">60 seconds</option></select></div>
+          <div class="field"><label>Algorithm</label><select name="algorithm"><option>SHA1</option><option>SHA256</option><option>SHA512</option></select></div>
+          <div class="field" data-hotp-only hidden><label>Counter</label><div class="input-wrap"><input name="counter" type="number" min="0" value="0"></div><span class="err"></span></div>
+        </form>
+        <div class="uri"><code id="uri"></code><button class="btn btn-light sm" data-copy-from="uri">Copy link</button></div>
+        <form class="verify" id="verifyForm" autocomplete="off">
+          <label for="verifyCode"><b>Check a code from your app</b></label>
+          <div class="verify-row"><input id="verifyCode" inputmode="numeric" maxlength="9" placeholder="123 456" class="mono">
+            <button class="btn btn-primary">Check</button></div>
+          <div class="alert hidden" id="verifyMsg"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>One-time codes</h2></div>
+        <p class="muted small">Random codes for SMS / email verification, vouchers or test logins.</p>
+        <form class="gen-form" data-tool="otp">
+          <div class="field"><label>Type</label>
+            <select name="type"><option value="numeric">Numbers only (482913)</option><option value="alphanumeric">Letters + numbers (K7Q2ZP)</option>
+              <option value="safe">Easy to read - no 0/O, 1/I (H7KX4P)</option><option value="letters">Letters only (QWHRTA)</option><option value="hex">Hexadecimal (3FA9C1)</option></select></div>
+          <div class="field"><label>Length <b class="out" data-for="length">6</b></label><input class="range" type="range" name="length" min="4" max="12" value="6"></div>
+          <div class="field"><label>Valid for</label><div class="input-wrap"><input name="valid" type="number" min="1" max="60" value="5"><span class="post">minutes</span></div><span class="err"></span></div>
+          {{ count_field(5) }}
+          <label class="check"><input type="checkbox" name="group"> Show in groups (482-913)</label>
+          <label class="check"><input type="checkbox" name="no_leading_zero"> No leading zero</label>
+          <button class="btn btn-primary">Generate codes</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ PASSWORD -->
+  <section class="gen-panel" data-panel="password" {{ 'hidden' if tool != 'password' }}>
+    <div class="gen-grid">
+      <div class="card">
+        <div class="card-head"><h2>Password options</h2></div>
+        <form class="gen-form" data-tool="password">
+          <div class="segmented" data-mode-switch>
+            <label><input type="radio" name="mode" value="password" checked><span>Password</span></label>
+            <label><input type="radio" name="mode" value="passphrase"><span>Passphrase</span></label>
+            <label><input type="radio" name="mode" value="pin"><span>PIN</span></label>
+          </div>
+          <div class="field" data-modes="password pin"><label>Length <b class="out" data-for="length">16</b></label><input class="range" type="range" name="length" min="4" max="64" value="16"></div>
+          <div data-modes="password" class="checks">
+            <label class="check"><input type="checkbox" name="upper" checked> Capital letters A-Z</label>
+            <label class="check"><input type="checkbox" name="lower" checked> Small letters a-z</label>
+            <label class="check"><input type="checkbox" name="digits" checked> Numbers 0-9</label>
+            <label class="check"><input type="checkbox" name="symbols" checked> Symbols !@#$%…</label>
+            <label class="check"><input type="checkbox" name="no_ambiguous"> Avoid look-alikes (I l 1 O 0)</label>
+          </div>
+          <div class="field" data-modes="password"><label>Symbols to use</label><div class="input-wrap"><input name="symbols_set" value="!@#$%^&amp;*()-_=+[]{};:,.?/~" class="mono"></div></div>
+          <div class="field" data-modes="passphrase" hidden><label>Words <b class="out" data-for="words">5</b></label><input class="range" type="range" name="words" min="3" max="12" value="5"></div>
+          <div class="field" data-modes="passphrase" hidden><label>Separator</label><select name="separator"><option value="-">dash  (Word-Word)</option><option value=".">dot  (Word.Word)</option><option value="_">underscore</option><option value=" ">space</option><option value="">none</option></select></div>
+          <div data-modes="passphrase" class="checks" hidden>
+            <label class="check"><input type="checkbox" name="capitalize" checked> Capital first letters</label>
+            <label class="check"><input type="checkbox" name="number" checked> Add a number</label>
+          </div>
+          {{ count_field(10) }}
+          <span class="err form-err"></span>
+          <button class="btn btn-primary">Generate</button>
+        </form>
+      </div>
+      <div class="card check-pw">
+        <div class="card-head"><h2>How strong is my password?</h2></div>
+        <p class="muted small">Checked only in your browser - the password is never sent anywhere.</p>
+        <div class="input-wrap"><input type="password" id="pwCheck" placeholder="Type a password" autocomplete="off">
+          <button type="button" class="post btn-in" id="pwShow">Show</button></div>
+        <div class="meter"><i id="pwBar"></i></div>
+        <ul class="pw-facts" id="pwFacts"><li class="muted">Start typing…</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ EMAIL -->
+  <section class="gen-panel" data-panel="email" {{ 'hidden' if tool != 'email' }}>
+    <div class="gen-grid">
+      <div class="card">
+        <div class="card-head"><h2>Email options</h2></div>
+        <form class="gen-form" data-tool="email">
+          <div class="field"><label>Type</label>
+            <select name="type">{% for k, v in EMAIL_TYPES.items() %}<option value="{{ k }}" {{ 'selected' if k == 'mixed' }}>{{ v }}</option>{% endfor %}</select></div>
+          <div class="field"><label>Domains</label>
+            <select name="domains" id="domainSource">
+              <option value="safe">Safe test domains (example.com, *.test)</option>
+              <option value="providers">Popular providers (gmail.com, mail.ru …)</option>
+              <option value="custom">My own domain…</option></select>
+            <span class="help" id="domainHelp">Reserved for testing - mail to them never reaches a real person.</span></div>
+          <div class="field" id="customDomain" hidden><label>Domain</label><div class="input-wrap"><span class="pre">@</span><input name="domain" placeholder="mycompany.com"></div><span class="err"></span></div>
+          {{ count_field(10) }}
+          <button class="btn btn-primary">Generate emails</button>
+        </form>
+      </div>
+      <div class="card info-card">
+        <h2>Email types</h2>
+        <dl class="types">
+          <dt>first.last</dt><dd>jean.uwimana@example.com</dd>
+          <dt>initials / work</dt><dd>j.uwimana@company.test</dd>
+          <dt>nickname</dt><dd>swiftriver42@example.org</dd>
+          <dt>role</dt><dd>info@, support@, billing@, noreply@</dd>
+          <dt>plus address</dt><dd>grace.mugisha+shop12@example.net - many providers deliver it to grace.mugisha@</dd>
+          <dt>subdomain</dt><dd>eric.kamau@mail.company.test</dd>
+          <dt>student</dt><dd>s202612345@students.school.test</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ PHONE -->
+  <section class="gen-panel" data-panel="phone" {{ 'hidden' if tool != 'phone' }}>
+    <div class="gen-grid">
+      <div class="card">
+        <div class="card-head"><h2>Phone number options</h2></div>
+        <form class="gen-form" data-tool="phone">
+          <div class="field"><label>Country</label>{{ country_select('country', 'RW') }}<span class="err"></span></div>
+          <div class="segmented">
+            <label><input type="radio" name="kind" value="mobile" checked><span>Mobile</span></label>
+            <label><input type="radio" name="kind" value="landline"><span>Landline</span></label>
+          </div>
+          <label class="check" id="safeWrap"><input type="checkbox" name="safe"> <span>Use the official <b>fictional</b> range (never a real person)</span></label>
+          <span class="help" id="safeHelp">Available for USA, Canada, the Caribbean (555-01xx) and UK (07700 900xxx).</span>
+          {{ count_field(10) }}
+          <button class="btn btn-primary">Generate numbers</button>
+        </form>
+      </div>
+      <div class="card info-card">
+        <h2>How the numbers are made</h2>
+        <ul class="bul">
+          <li>Every one of the <b>{{ n_countries }}</b> countries and territories with its real calling code (+250 Rwanda, +254 Kenya, +7 Russia …).</li>
+          <li>{% if phone_lib %}<b>Google libphonenumber is installed</b> - every number is checked against the official numbering plan, with operator and area.{% else %}Real mobile prefixes and lengths for 100+ countries (MTN 078 / Airtel 073 Rwanda, Safaricom 07xx Kenya …); a usual format for the rest.
+            For exact checks of all countries run <code>pip install phonenumbers</code>.{% endif %}</li>
+          <li>Three formats: international (+250 788 123 456), national (0788 123 456) and E.164 for databases (+250788123456).</li>
+          <li>Random numbers can belong to real people - use them only to test forms, never to call or text.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ PASSPORT -->
+  <section class="gen-panel" data-panel="passport" {{ 'hidden' if tool != 'passport' }}>
+    <div class="gen-grid">
+      <div class="card">
+        <div class="card-head"><h2>Passport number options</h2></div>
+        <form class="gen-form" data-tool="passport">
+          <div class="field"><label>Country</label>{{ country_select('country', 'RW') }}<span class="err"></span></div>
+          {{ count_field(10) }}
+          <button class="btn btn-primary">Generate numbers</button>
+        </form>
+      </div>
+      <div class="card info-card">
+        <h2>About passport numbers</h2>
+        <ul class="bul">
+          <li>Gives the <b>number format only</b> - for testing booking, visa or registration forms. It is not a document and is not valid for travel.</li>
+          <li><b>{{ passport_known }}</b> countries use their published format (USA 9 digits, Germany "C" + 8, China "E" + 8, India 1 letter + 7 digits …),
+            some are marked <i>approximate</i>, and the rest use the general international format (up to 9 letters and digits, ICAO 9303).</li>
+          <li>A random number can match a real passport by chance - never use one as if it were real.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ results -->
+  <section class="card results" id="results" hidden>
+    <div class="card-head"><h2 id="resTitle">Results</h2>
+      <div class="actions"><button class="btn btn-light sm" id="regen">↻ Again</button><button class="btn btn-light sm" id="copyAll">Copy all</button>
+        <button class="btn btn-light sm" id="csv">CSV</button></div></div>
+    <div class="alert hidden" id="resInfo"></div>
+    <div class="table-wrap gen-wrap"><table class="table gen-table" id="resTable"></table></div>
+  </section>
+  <p class="disclaimer muted small">Emails, phone and passport numbers made here are <b>test data</b> for developers and students. Do not use them to pretend to be someone, to sign up as another person or on official documents.</p>
+</div>
+<div class="toast" id="toast"></div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
+<script src="{{ url_for('static', filename='gen.js') }}" defer></script>
+{% endblock %}
